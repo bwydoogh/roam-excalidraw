@@ -318,7 +318,7 @@ window['ExcalidrawWrapper'] = class {
       svg.removeAttribute('height');
       svg.classList.add('excalidraw-svg');
       return aspectRatio; //aspect ration
-    });
+    })();
   }
 
   static getPNG(diagram,node,appName) {
