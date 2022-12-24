@@ -2,7 +2,7 @@ if (typeof window.ExcalidrawWrapper === 'undefined') {
   window.ExcalidrawConfig = {
     rootPath: 'https://bwydoogh.github.io/roam-excalidraw/',
     channel: 'dist',
-    cljCodeVersion: 'excalidraw.app.mvp.v08',
+    cljCodeVersion: 'excalidraw.app.mvp.v09',
     DEBUG : false,
     sketchingUID : 'sketching',
     excalDATAUID : 'ExcalDATA',

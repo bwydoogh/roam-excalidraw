@@ -415,7 +415,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn resize [ew]
   (debug ["(resize)"])
-  (if-not (nil? @ew) (.onResize @ew)))
+  ;;(if-not (nil? @ew) (.onResize @ew))
+  )
 
 (defn update-scene [ew scene]
   ;;(debug ["(update-scene) scene: " scene])
