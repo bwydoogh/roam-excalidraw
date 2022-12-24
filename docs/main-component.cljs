@@ -1,5 +1,5 @@
 (ns excalidraw.app.mvp.v08
-  (:require 
+  (:require
    [clojure.set :as s]
    [reagent.core :as r]
    [roam.datascript :as rd]
@@ -54,7 +54,7 @@
           (str/replace "}" "\n}"))))
 
 (defn get-next-block-order [x]
-  (let [o (rd/q '[:find (max ?o) . 
+  (let [o (rd/q '[:find (max ?o) .
                   :in $ ?uid
                   :where [?b :block/uid ?uid]
                          [?b :block/children ?c]
@@ -73,11 +73,11 @@
                                             [?b :block/uid ?uid]]
                                     app-page app-settings-block))]
     (if (nil? @settings-host)
-      (do 
+      (do
         ;;(debug ["(save-settings) settings host does not exist"])
         (reset! settings-host
-          (create-block 
-            (rd/q '[:find ?uid . 
+          (create-block
+            (rd/q '[:find ?uid .
                     :in $ ?page
                     :where [?p :node/title ?page]
                            [?p :block/uid ?uid]]
@@ -91,12 +91,12 @@
                                                 [?c :block/uid ?uid]]
                                         @settings-host))]
       (if (nil? @settings-block)
-        (do 
+        (do
           ;;(debug ["(save-settings) settings-block does not exist"])
           (create-block @settings-host 0 (pretty-settings @app-settings)))
-        (do 
+        (do
           ;;(debug ["(save-settings) settings-block exists, updating"])
-          (block-update {:block {:uid @settings-block 
+          (block-update {:block {:uid @settings-block
                                  :string (pretty-settings @app-settings)}}))))))
 
 (defn js-to-clj-str [& x]
@@ -130,16 +130,16 @@
                                                 [?b :block/order ?order]]
 			                             block-uid order))
 
-(defn flatten-nested-text [nested-text level] 
+(defn flatten-nested-text [nested-text level]
   (let [result (atom nil)]
     (doseq [y nested-text]
       (let [order (str/join [level (pp/cl-format nil "~2,'0d" (:block/order y))])]
         (reset! result (conj @result {:block/string (:block/string y)
                                        :block/order order
                                        :block/uid (:block/uid y)}))
-        (if-not (nil? (:block/children y)) 
+        (if-not (nil? (:block/children y))
           (reset! result (concat @result (flatten-nested-text (:block/children y) order))))
-    ))   
+    ))
     ;;(debug ["flat-nest " (str @result)])
      (into [] (sort-by :block/order @result))
 ))
@@ -165,9 +165,9 @@
 )
 
 ;;{:block-uid "BlockUID" :map-string "String" :cs atom :drawing atom}
-(defn save-component [x] 
+(defn save-component [x]
   ;;Disable the pullWatch while blocks are edited
-  (reset! (:saving-flag x) true) 
+  (reset! (:saving-flag x) true)
   ;;(debug ["(save-component) Enter"])
 
   (let [data-block-uid (get-data-block-uid (:block-uid x))
@@ -175,9 +175,9 @@
         text-elements (r/atom nil)
         ;;get text blocks nested under title
         nestedtext-parent-block-uid (get-in @(:drawing x) [:nestedtext-parent :block-uid])
-        nested-text-blocks (get-text-blocks (:block-uid x)) 
+        nested-text-blocks (get-text-blocks (:block-uid x))
         app-state (into {} (filter (comp some? val) (:appState edn-map)))] ;;remove nil elements from appState
-    
+
     ;;process text on drawing
     ;;(debug ["(save-component) start processing text"])
     (doseq [y (get-text-elements (:elements edn-map))]
@@ -205,22 +205,22 @@
           (do ;;block with text does not exist as nested block, create new
             ;;(debug ["(save-component) block does not exists, creating"])
             (let [new-block-uid (.createBlock js/ExcalidrawWrapper nestedtext-parent-block-uid (get-next-block-order nestedtext-parent-block-uid) (:text y))]
-              (reset! text-elements (conj @text-elements (assoc-in y [:id] (str/join ["ROAM_" new-block-uid "_ROAM"])))) 
-              (reset! text-elements (conj @text-elements (assoc-in y [:isDeleted] true))) 
+              (reset! text-elements (conj @text-elements (assoc-in y [:id] (str/join ["ROAM_" new-block-uid "_ROAM"]))))
+              (reset! text-elements (conj @text-elements (assoc-in y [:isDeleted] true)))
               )))))
 
     ;;(debug ["(save-component) text-blocks with updated IDs" (str @text-elements)])
     ;;updating the data block is the final piece in saving the component
-    (let [elements (update-elements-with-parts {:raw-elements (:elements edn-map) :text-elements @text-elements})  
+    (let [elements (update-elements-with-parts {:raw-elements (:elements edn-map) :text-elements @text-elements})
           out-string (fix-double-bracket (str {:elements elements :appState app-state :roamExcalidraw {:version plugin-version}}))
           render-string (str/join ["{{roam/render: ((ExcalDATA)) " out-string " }}"])]
       (block-update
         {:block {:uid data-block-uid
-                :string render-string}}) 
+                :string render-string}})
       (swap! app-settings assoc-in [:mode] (get-in app-state [:theme]))
       (save-settings)
       (reset! (:saving-flag x) false)
-      {:elements elements :appState app-state :roamExcalidraw {:version plugin-version}}                                      
+      {:elements elements :appState app-state :roamExcalidraw {:version plugin-version}}
 )))
 
 (defn load-settings []
@@ -235,7 +235,7 @@
                                      [?c :block/string ?settings]]
                             app-page app-settings-block)]
     (if-not (nil? settings-block)
-      (do 
+      (do
         ;;(debug ["(load-settings) settings: " settings-block])
         (reset! app-settings (edn/read-string settings-block))
         (if (nil? @app-settings)
@@ -252,7 +252,7 @@
 (defn get-data-from-block-string [x]
   ;;(debug ["(get-data-from-block-string)" (count x)])
   (if (= (count x) 0)
-    (do 
+    (do
       ;;(debug ["(get-data-from-block-string) returning nil"])
       nil)
     (do
@@ -263,7 +263,7 @@
 
 (defn create-nested-blocks [x]; {:block-uid "BlockUID" :drawing atom :empty-block-uid "BlockUID"}
 ;;block uid is the block of the roam/render component
-;;empty block is the block created by the user by trying to nest text under 
+;;empty block is the block created by the user by trying to nest text under
 ;;a new drawing that hasn't been edited yet (i.e. the data and title children
 ;;are missing)
   ;;(debug ["(create-nested-blocks)"])
@@ -271,10 +271,10 @@
                       :roamExcalidraw {:version 1}}]
     (create-block (:block-uid x) 0 (str/join ["{{roam/render: ((ExcalDATA)) "
                                 (str default-data) " }}"]))
-    (reset! (:drawing x) {:drawing default-data 
+    (reset! (:drawing x) {:drawing default-data
                           :nestedtext-parent {:block-uid (create-block (:block-uid x) 1 "**Text nested here will appear on your drawing:**")}})
-                                                              
-    (if (nil? (:empty-block-uid x)) 
+
+    (if (nil? (:empty-block-uid x))
       (block-update {:block {:uid (:block-uid x) :open false}}) ;;fold up the drawing block to hide children
       (block/move {:location {:parent-uid (get-in @(:drawing x) [:nestedtext-parent :block-uid]) ;;move new block under nested text
                             :order 0}
@@ -283,7 +283,7 @@
 
 
 
-(defn load-drawing [x] ;{:block-uid "BlockUID" :drawing atom :data objects :text "text"} 
+(defn load-drawing [x] ;{:block-uid "BlockUID" :drawing atom :data objects :text "text"}
 ;drawing is the atom holding the drawing map
 ;block uid is the block with the roam/render component
 ;data are the drawing objects
@@ -294,7 +294,7 @@
         ;;(debug ["(load-drawing) no children - creating dummy data"])
         (let [default-data {:appState {:theme (:mode @app-settings)}
                             :roamExcalidraw {:version 1}}]
-          (reset! (:drawing x) {:drawing default-data 
+          (reset! (:drawing x) {:drawing default-data
                                 :nestedtext-parent {:block-uid nil}})
       ))
       (if (= (count (:text x)) 0)
@@ -316,45 +316,45 @@
 ;;check if text in nested block has changed compared to drawing and updated text in drawing element including size
 (defn update-drawing-based-on-nested-blocks [x] ;{:elements [] :appState {} :nested-text [:block/uid "BlockUID" :block/string "text"]}
   ;;(debug ["(update-drawing-based-on-nested-blocks) Enter x:" x])
-  (if-not (nil? (:nested-text x)) 
+  (if-not (nil? (:nested-text x))
     (do
       (let [text-elements (r/atom nil)
-            nested-text (flatten-nested-text (:nested-text x) "")]   
+            nested-text (flatten-nested-text (:nested-text x) "")]
       ;;(debug ["(update-drawing-based-on-nested-blocks) processing nested text - apply changes to existing text elements, omit deleted ones"])
         ;;update elements on drawing based on changes to nested text
         (doseq [y (get-text-elements (:elements x))]
           (let [block-uid (get-block-uid-from-text-element y)
                 block-text (:block/string (first (filter (comp #{block-uid} :block/uid) nested-text)))
                 text-element-has-nested-block-pair (= 0 (count (filter (comp #{block-uid} :block/uid) nested-text)))]
-            ;;add text to drawing if text element has a nested block pair, 
-            (if (not text-element-has-nested-block-pair)  
+            ;;add text to drawing if text element has a nested block pair,
+            (if (not text-element-has-nested-block-pair)
               (do
                 ;if text has changed, update measures
-                (if-not (= block-text (:text y)) 
+                (if-not (= block-text (:text y))
                   (let [text-measures (js->clj (.measureText js/ExcalidrawWrapper block-text (clj->js y)))]
-                    (reset! text-elements 
-                              (conj @text-elements 
-                                      (-> y 
+                    (reset! text-elements
+                              (conj @text-elements
+                                      (-> y
                                         (assoc-in [:text] block-text)
                                         (assoc-in [:baseline] (get text-measures "baseline"))
                                         (assoc-in [:width] (get text-measures "width"))
                                         (assoc-in [:height] (get text-measures "height"))
                     ))))
-                  ;;else add to list as-is 
+                  ;;else add to list as-is
                   (reset! text-elements (conj @text-elements y))))
               ;;else it should be removed from the drawing
               ;;unless the drawing is from an old version of the plugin when nested blocks weren't handled
-              (if (< (get-in x [:roamExcalidraw :version]) 1) 
+              (if (< (get-in x [:roamExcalidraw :version]) 1)
                 (reset! text-elements (conj @text-elements y)))
         )))
-        
+
         ;;(debug ["(update-drawing-based-on-nested-blocks) processing nested text - add new nested blocks"])
         ;;add text for newly nested blocks
         (let [counter (atom -1)]
           (doseq [nt nested-text]
             (swap! counter inc)
             (let [text (:block/string nt)
-                  dummy {:fontFamily (:nested-text-font-family @app-settings) 
+                  dummy {:fontFamily (:nested-text-font-family @app-settings)
                         :fontSize (:nested-text-font-size @app-settings)}
                   order (:block/order nt)
                   id (:block/uid nt)]
@@ -362,11 +362,11 @@
                 (let [col (int (/ @counter (:nested-text-rows @app-settings)))
                       row (mod @counter (:nested-text-rows @app-settings))
                       x (+ (:nested-text-start-left @app-settings) (* col (:nested-text-col-width @app-settings)))
-                      y (+ (:nested-text-start-top @app-settings) (* row (:nested-text-row-height @app-settings)))  
+                      y (+ (:nested-text-start-top @app-settings) (* row (:nested-text-row-height @app-settings)))
                       text-measures (js->clj (.measureText js/ExcalidrawWrapper text (clj->js dummy)))]
                   ;;(debug ["(update-drawing-based-on-nested-blocks) add new: text" text "id" id])
-                  (reset! text-elements 
-                            (conj @text-elements 
+                  (reset! text-elements
+                            (conj @text-elements
                                   {:y y
                                     :baseline (get text-measures "baseline")
                                     :isDeleted false
@@ -392,7 +392,7 @@
                                     :backgroundColor "transparent"
                                     :versionNonce 1
                                     :height (get text-measures "height")
-                                    :text text}))                                
+                                    :text text}))
           )))))
 
 
@@ -414,7 +414,7 @@
 ;; Main Function Form-3
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn resize [ew]
-  ;;(debug ["(resize)"])
+  (debug ["(resize)"])
   (if-not (nil? @ew) (.onResize @ew)))
 
 (defn update-scene [ew scene]
@@ -432,22 +432,22 @@
         left     (int (* width (:full-screen-margin @app-settings)))
         host-div-width (if (nil? (:this-dom-node @cs)) (:max-embed-width @app-settings)
                          (.getHostDIVWidth js/ExcalidrawWrapper (:this-dom-node @cs)))
-        embed-width (if (> host-div-width (:max-embed-width @app-settings)) 
+        embed-width (if (> host-div-width (:max-embed-width @app-settings))
                       (:max-embed-width @app-settings) host-div-width)
         embed-height (* (:max-embed-height @app-settings) (/ embed-width (:max-embed-width @app-settings)))
         ar (:aspect-ratio @cs)
-        w (if (nil? ar) embed-width 
+        w (if (nil? ar) embed-width
             (if (> ar 1.0) embed-width
               (* ar embed-height)))
-        h (if (nil? ar @cs) "100%" 
-            (if (> ar 1.0) "100%" 
+        h (if (nil? ar @cs) "100%"
+            (if (> ar 1.0) "100%"
               embed-height  ))]
     (if (is-full-screen cs)
       {:position "fixed"
       :z-index 1000
       :top top
       :left left
-      :width  (str/join ["calc(100% - " (* left 2) "px)"]) 
+      :width  (str/join ["calc(100% - " (* left 2) "px)"])
       :height (- height (* top 2))
       :resize "none"}
       {:position "relative"
@@ -475,7 +475,7 @@
 (def deps-available (r/atom false))
 
 (defn check-js-dependencies []
-  (if (and 
+  (if (and
        (not= (str (type js/Excalidraw)) "")
        (not= (str (type js/ReactDOM)) "")
        (not= (str (type js/React)) "")
@@ -485,7 +485,7 @@
       (reset! deps-available true))
     (js/setTimeout check-js-dependencies 1000)
   ))
-                                  
+
 (defn get-embed-image [drawing dom-node app-name]
   (let [drawing-js (clj->js drawing)]
     (if (= (:img @app-settings) "PNG")
@@ -506,15 +506,15 @@
         ew (r/atom nil) ;;excalidraw-wrapper
         app-name (str/join ["excalidraw-app-" block-uid])
         style (r/atom {:host-div (host-div-style cs)})
-        resize-handler (fn [] (if (is-full-screen cs) 
-                                (swap! style assoc-in [:host-div] (host-div-style cs))  
-                                (if-not (nil? (:this-dom-node @cs)) 
+        resize-handler (fn [] (if (is-full-screen cs)
+                                (swap! style assoc-in [:host-div] (host-div-style cs))
+                                (if-not (nil? (:this-dom-node @cs))
                                   (swap! style assoc-in [:host-div] (host-div-style cs)))))
         ;changed-drawing (atom nil)
         drawing-on-change-callback (fn [x] (if-not @saving-flag
-                                             (.updateScene 
-                                              @ew 
-                                              (clj->js 
+                                             (.updateScene
+                                              @ew
+                                              (clj->js
                                                (save-component
                                                 {:block-uid block-uid
                                                  :map-string (js-to-clj-str x)
@@ -524,7 +524,7 @@
         pull-watch-callback (fn [before after]
                               ;;(debug ["(pull-watch-callback) after:" (js-to-clj-str after)])
                               (if-not (or @saving-flag (is-full-screen cs) @pull-watch-active)
-                                (do 
+                                (do
                                   (reset! pull-watch-active true)
                                   (let [drawing-data (pull-children block-uid 0)
                                         drawing-text (pull-children block-uid 1)
@@ -533,13 +533,13 @@
                                       (if-not (= (second empty-block-uid) (:prev-empty-block @cs))
                                         (do
                                           (swap! cs assoc-in [:prev-empty-block] (second empty-block-uid)) ;;semaphore to avoid double creation of blocks
-                                          (create-nested-blocks {:block-uid block-uid 
-                                                                  :drawing drawing 
+                                          (create-nested-blocks {:block-uid block-uid
+                                                                  :drawing drawing
                                                                   :empty-block-uid (second empty-block-uid)})
-                                          ))) 
-                                    (load-drawing {:block-uid block-uid 
-                                                  :drawing drawing 
-                                                  :data (get-data-from-block-string drawing-data) 
+                                          )))
+                                    (load-drawing {:block-uid block-uid
+                                                  :drawing drawing
+                                                  :data (get-data-from-block-string drawing-data)
                                                   :text (first drawing-text)})
                                     (if-not (is-full-screen cs)
                                       (do
@@ -563,22 +563,22 @@
 ;          :get-snapshot-before-update (fn [this old-argv new-argv] )
 ;          :should-component-update (fn [this old-argv new-argv])
         :component-did-mount (fn [this]
-                                ;;(debug ["(main) :component-did-mount"])
+                                (debug ["(main) :component-did-mount"])
                                 (load-settings)
                                 (swap! cs assoc-in [:this-dom-node] (r/dom-node this))
-                                ;;(debug ["(main) :component-did-mount addPullWatch"])
+                                (debug ["(main) :component-did-mount addPullWatch"])
                                 (.addPullWatch js/ExcalidrawWrapper block-uid pull-watch-callback)
                                 (pull-watch-callback nil nil)
                                 (swap! style assoc-in [:host-div] (host-div-style cs))
                                 (.addEventListener js/window "resize" resize-handler)
-                                ;;(debug ["(main) :component-did-mount Exalidraw mount initiated"])
+                                (debug ["(main) :component-did-mount Exalidraw mount initiated"])
                               )
         :component-did-update (fn [this old-argv old-state snapshot]
-                                ;;(debug ["(main) :component-did-update"])
+                                (debug ["(main) :component-did-update"])
                                 (if (is-full-screen cs)
                                   (resize ew)))
         :component-will-unmount (fn [this]
-                                  ;;(debug ["(main) :component-will-unmount"])
+                                  (debug ["(main) :component-will-unmount"])
                                   (.removePullWatch js/ExcalidrawWrapper block-uid pull-watch-callback)
                                   (.removeEventListener js/window "resize" resize-handler))
 ;           :component-did-catch (fn [this error info])
@@ -593,16 +593,16 @@
                               [:button
                                 {:class "ex-embed-button"
                                 :style {:display (if (:mouseover @cs) "block" "none")
-                                        :left (if-not (nil? (:this-dom-node @cs)) 
-                                                (- (.-clientWidth (:this-dom-node @cs)) 32) 
+                                        :left (if-not (nil? (:this-dom-node @cs))
+                                                (- (.-clientWidth (:this-dom-node @cs)) 32)
                                                 0)}
                                 :draggable true
                                 :on-click (fn [e]
                                             (load-settings)
                                             (going-full-screen? true cs style)
-                                            (if (nil? (get-in @drawing [:nestedtext-parent :block-uid])) 
-                                              (create-nested-blocks {:block-uid block-uid 
-                                                                      :drawing drawing 
+                                            (if (nil? (get-in @drawing [:nestedtext-parent :block-uid]))
+                                              (create-nested-blocks {:block-uid block-uid
+                                                                      :drawing drawing
                                                                       :empty-block-uid nil}))
                                             (reset! ew (js/ExcalidrawWrapper.
                                                         app-name
@@ -619,7 +619,7 @@
                                 :on-click (fn [e]
                                             (.svgClipboard js/ExcalidrawWrapper)
                                             (going-full-screen? false cs style)
-                                            (save-component {:block-uid block-uid 
+                                            (save-component {:block-uid block-uid
                                                               :map-string (js-to-clj-str (get-drawing ew))
                                                               :cs cs
                                                               :drawing drawing
